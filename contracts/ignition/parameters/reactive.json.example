@@ -1,0 +1,8 @@
+{
+  "ShieldBrainModule": {
+    "vaultContract": "0x...",
+    "oracleContract": "0x...",
+    "systemContract": "0x0000000000000000000000000000000000fffFfF"
+  }
+}
+

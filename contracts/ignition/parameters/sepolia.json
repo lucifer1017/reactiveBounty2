@@ -1,0 +1,8 @@
+{
+    "ReactiveMorphoShieldModule": {
+        "loanToken": "0xA41D33DE4B7C61765355f69D056D2CB8450478a0",
+        "collateralToken": "0x325215b0948eBf5dF130643e9639479E4912adfB",
+        "oracle": "0x6A1cAF23D2B53A2AdC59744aeF517A030DB0a540",
+        "reactiveVmId": "0xf092ae8eb89f9d1dde19b80447de5b1528d17ae5"
+    }
+}

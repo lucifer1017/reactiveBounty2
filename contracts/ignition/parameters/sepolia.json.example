@@ -1,0 +1,9 @@
+{
+  "ReactiveMorphoShieldModule": {
+    "loanToken": "0x...",
+    "collateralToken": "0x...",
+    "oracle": "0x...",
+    "reactiveVmId": "0x..."
+  }
+}
+
