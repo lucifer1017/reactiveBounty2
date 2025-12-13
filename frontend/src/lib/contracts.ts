@@ -19,11 +19,18 @@ export const contracts = {
   
   // Reactive Network (for display only)
   brain: '0x722B8400EFc57F904a109657a90DED06f3057994' as `0x${string}`,
+  // Reactive Scan uses /address/<owner>/contract/<contract> for contract detail pages.
+  // Owner here is the account that "hosts" the contract page in Reactive Scan.
+  brainOwner: '0xf092ae8eb89f9d1dde19b80447de5b1528d17ae5' as `0x${string}`,
 } as const;
 
 export const EXPLORER_URLS = {
   sepolia: 'https://sepolia.etherscan.io',
   reactive: 'https://lasna.reactscan.net',
+} as const;
+
+export const REACTIVE_SCAN_URLS = {
+  brainContract: `${EXPLORER_URLS.reactive}/address/${contracts.brainOwner}/contract/${contracts.brain}`,
 } as const;
 
 export const RPC_URLS = {

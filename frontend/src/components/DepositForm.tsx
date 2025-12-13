@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseEther, formatUnits } from 'viem';
+import { useState } from 'react';
+import { useAccount, usePublicClient, useReadContract, useWriteContract } from 'wagmi';
+import { sepolia } from 'wagmi/chains';
+import { parseEther, formatUnits, type Hash } from 'viem';
 import { GlassCard } from './GlassCard';
 import { motion } from 'framer-motion';
 import { ArrowDown, Loader2, Sparkles } from 'lucide-react';
@@ -13,8 +14,15 @@ import { toast } from 'sonner';
 
 export function DepositForm() {
   const { address } = useAccount();
+  const publicClient = usePublicClient({ chainId: sepolia.id });
   const [amount, setAmount] = useState('');
   const [step, setStep] = useState<'idle' | 'mint' | 'approve' | 'deposit'>('idle');
+  const [mintDone, setMintDone] = useState(false);
+  const [approveDone, setApproveDone] = useState(false);
+  const [depositDone, setDepositDone] = useState(false);
+  const [mintTxHash, setMintTxHash] = useState<Hash | undefined>(undefined);
+  const [approveTxHash, setApproveTxHash] = useState<Hash | undefined>(undefined);
+  const [depositTxHash, setDepositTxHash] = useState<Hash | undefined>(undefined);
 
   // Read WETH balance
   const { data: balance, refetch: refetchBalance } = useReadContract({
@@ -24,42 +32,111 @@ export function DepositForm() {
     args: address ? [address] : undefined,
   });
 
-  const { writeContract: mint, data: mintHash } = useWriteContract();
-  const { writeContract: approve, data: approveHash } = useWriteContract();
-  const { writeContract: deposit, data: depositHash } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
 
-  const { isLoading: isMintLoading, isSuccess: isMintSuccess } = useWaitForTransactionReceipt({
-    hash: mintHash,
-  });
+  const requireClient = () => {
+    if (!address) throw new Error('Wallet not connected');
+    if (!publicClient) throw new Error('RPC not ready');
+  };
 
-  const { isLoading: isApproveLoading, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
-    hash: approveHash,
-  });
+  const waitReceipt = async (hash: Hash) => {
+    // This polls via the configured wagmi transport (with fallbacks)
+    return await publicClient!.waitForTransactionReceipt({
+      hash,
+      confirmations: 1,
+      timeout: 120_000,
+    });
+  };
 
-  const { isLoading: isDepositLoading, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({
-    hash: depositHash,
-  });
+  const handleMint = async () => {
+    try {
+      requireClient();
+      if (!amount || parseFloat(amount) <= 0) {
+        toast.error('Please enter a valid amount');
+        return;
+      }
+      setStep('mint');
+      setMintDone(false);
+      setMintTxHash(undefined);
 
-  // Handle mint success
-  useEffect(() => {
-    if (isMintSuccess) {
+      const hash = await writeContractAsync({
+        chainId: sepolia.id,
+        address: contracts.weth,
+        abi: MockWETHABI,
+        functionName: 'mint',
+        args: [address!, parseEther(amount)],
+      });
+      setMintTxHash(hash);
+
+      const receipt = await waitReceipt(hash);
+      if (receipt.status === 'reverted') throw new Error('Reverted');
+
+      setMintDone(true);
       toast.success('✨ WETH minted!');
       refetchBalance();
       setStep('approve');
+    } catch (e) {
+      toast.error('Mint failed or timed out. Please retry.');
+      setStep('idle');
     }
-  }, [isMintSuccess, refetchBalance]);
+  };
 
-  // Handle approve success
-  useEffect(() => {
-    if (isApproveSuccess) {
+  const handleApprove = async () => {
+    try {
+      requireClient();
+      if (!amount || parseFloat(amount) <= 0) {
+        toast.error('Enter an amount first');
+        return;
+      }
+      setStep('approve');
+      setApproveDone(false);
+      setApproveTxHash(undefined);
+
+      const hash = await writeContractAsync({
+        chainId: sepolia.id,
+        address: contracts.weth,
+        abi: MockWETHABI,
+        functionName: 'approve',
+        args: [contracts.vault, parseEther(amount)],
+      });
+      setApproveTxHash(hash);
+
+      const receipt = await waitReceipt(hash);
+      if (receipt.status === 'reverted') throw new Error('Reverted');
+
+      setApproveDone(true);
       toast.success('✅ Approved!');
       setStep('deposit');
+    } catch {
+      toast.error('Approval failed or timed out. Please retry.');
+      setStep('idle');
     }
-  }, [isApproveSuccess]);
+  };
 
-  // Handle deposit success
-  useEffect(() => {
-    if (isDepositSuccess) {
+  const handleDeposit = async () => {
+    try {
+      requireClient();
+      if (!amount || parseFloat(amount) <= 0) {
+        toast.error('Enter an amount first');
+        return;
+      }
+      setStep('deposit');
+      setDepositDone(false);
+      setDepositTxHash(undefined);
+
+      const hash = await writeContractAsync({
+        chainId: sepolia.id,
+        address: contracts.vault,
+        abi: ReactiveVaultABI,
+        functionName: 'deposit',
+        args: [parseEther(amount)],
+      });
+      setDepositTxHash(hash);
+
+      const receipt = await waitReceipt(hash);
+      if (receipt.status === 'reverted') throw new Error('Reverted');
+
+      setDepositDone(true);
       toast.success('🚀 Deposit successful! Loops starting...', {
         description: 'ShieldBrain will trigger 5 loops automatically',
         duration: 5000,
@@ -67,44 +144,17 @@ export function DepositForm() {
       setAmount('');
       setStep('idle');
       refetchBalance();
+    } catch {
+      toast.error('Deposit failed or timed out. Please retry.');
+      setStep('idle');
     }
-  }, [isDepositSuccess, refetchBalance]);
-
-  const handleMint = () => {
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
-
-    setStep('mint');
-    mint({
-      address: contracts.weth,
-      abi: MockWETHABI,
-      functionName: 'mint',
-      args: [address, parseEther(amount)],
-    });
-  };
-
-  const handleApprove = () => {
-    approve({
-      address: contracts.weth,
-      abi: MockWETHABI,
-      functionName: 'approve',
-      args: [contracts.vault, parseEther(amount)],
-    });
-  };
-
-  const handleDeposit = () => {
-    deposit({
-      address: contracts.vault,
-      abi: ReactiveVaultABI,
-      functionName: 'deposit',
-      args: [parseEther(amount)],
-    });
   };
 
   const balanceNum = balance ? Number(formatUnits(balance, 18)) : 0;
-  const isLoading = isMintLoading || isApproveLoading || isDepositLoading;
+  const isMintPending = step === 'mint' && !mintDone && !!mintTxHash;
+  const isApprovePending = step === 'approve' && !approveDone && !!approveTxHash;
+  const isDepositPending = step === 'deposit' && !depositDone && !!depositTxHash;
+  const isLoading = isMintPending || isApprovePending || isDepositPending;
 
   return (
     <div className="w-full">
@@ -172,7 +222,7 @@ export function DepositForm() {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
               <div className="relative">
-                {isMintLoading ? (
+                {isMintPending ? (
                   <div className="flex items-center justify-center gap-3">
                     <Loader2 className="w-6 h-6 animate-spin" />
                     <span>Minting...</span>
@@ -192,7 +242,7 @@ export function DepositForm() {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
               <div className="relative">
-                {isApproveLoading ? (
+                {isApprovePending ? (
                   <div className="flex items-center justify-center gap-3">
                     <Loader2 className="w-6 h-6 animate-spin" />
                     <span>Approving...</span>
@@ -212,7 +262,7 @@ export function DepositForm() {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
               <div className="relative">
-                {isDepositLoading ? (
+                {isDepositPending ? (
                   <div className="flex items-center justify-center gap-3">
                     <Loader2 className="w-6 h-6 animate-spin" />
                     <span>Depositing...</span>
@@ -240,11 +290,11 @@ export function DepositForm() {
         </div>
 
         {/* Info */}
-        <div className="relative mx-2 mt-4 p-7 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-2xl border-2 border-purple-400/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent rounded-2xl"></div>
-          <p className="relative text-base font-semibold text-white text-center leading-loose">
-            <span className="inline-block mr-2 text-xl">🔄</span>
-            Reactive Shield will automatically execute <span className="text-purple-200 font-bold px-3 py-1.5 bg-purple-500/30 rounded-lg border border-purple-400/40">5 loops</span> to build leverage
+        <div className="relative mx-2 mt-4 p-6 bg-gradient-to-r from-purple-500/15 to-blue-500/15 rounded-2xl border-2 border-purple-400/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent rounded-2xl" />
+          <p className="relative text-sm md:text-base font-semibold text-white text-center leading-relaxed md:leading-loose break-words">
+            <span className="inline-block mr-2 text-lg md:text-xl">🔄</span>
+            Reactive Shield will automatically execute <span className="text-purple-200 font-bold px-2.5 py-1 bg-purple-500/25 rounded-lg border border-purple-400/30">5 loops</span> to build leverage
           </p>
         </div>
         </div>
