@@ -34,7 +34,7 @@ export default function Home() {
           
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/yourusername/reactive-shield"
+              href="https://github.com/lucifer1017/reactiveBounty2"
               target="_blank"
               rel="noopener noreferrer"
               className="p-3 bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 rounded-xl transition-colors"
