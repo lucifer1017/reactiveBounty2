@@ -12,6 +12,16 @@ import MockWETHABI from '@/lib/abis/MockWETH.json';
 import ReactiveVaultABI from '@/lib/abis/ReactiveVault.json';
 import { toast } from 'sonner';
 
+const ERC20_BALANCE_ABI = [
+  {
+    inputs: [{ name: 'account', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
 export function DepositForm() {
   const { address } = useAccount();
   const publicClient = usePublicClient({ chainId: sepolia.id });
@@ -30,6 +40,14 @@ export function DepositForm() {
     abi: MockWETHABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+  });
+
+  const { data: vaultWethBalance, refetch: refetchVaultWethBalance } = useReadContract({
+    address: contracts.weth,
+    abi: ERC20_BALANCE_ABI,
+    functionName: 'balanceOf',
+    args: [contracts.vault],
+    query: { refetchInterval: 10_000 },
   });
 
   const { writeContractAsync } = useWriteContract();
@@ -74,6 +92,7 @@ export function DepositForm() {
       setMintDone(true);
       toast.success('✨ WETH minted!');
       refetchBalance();
+      refetchVaultWethBalance();
       setStep('approve');
     } catch (e) {
       toast.error('Mint failed or timed out. Please retry.');
@@ -144,6 +163,7 @@ export function DepositForm() {
       setAmount('');
       setStep('idle');
       refetchBalance();
+      refetchVaultWethBalance();
     } catch {
       toast.error('Deposit failed or timed out. Please retry.');
       setStep('idle');
@@ -153,6 +173,7 @@ export function DepositForm() {
   // `useReadContract`'s `data` is loosely typed here (ABI comes from JSON),
   // so we must narrow before passing into `formatUnits` (expects `bigint`).
   const balanceNum = typeof balance === 'bigint' ? Number(formatUnits(balance, 18)) : 0;
+  const vaultWethNum = typeof vaultWethBalance === 'bigint' ? Number(formatUnits(vaultWethBalance, 18)) : 0;
   const isMintPending = step === 'mint' && !mintDone && !!mintTxHash;
   const isApprovePending = step === 'approve' && !approveDone && !!approveTxHash;
   const isDepositPending = step === 'deposit' && !depositDone && !!depositTxHash;
@@ -170,12 +191,24 @@ export function DepositForm() {
             <Sparkles className="w-7 h-7 text-purple-400 animate-pulse drop-shadow-[0_0_12px_rgba(168,85,247,0.8)]" />
           </div>
 
-          {/* Balance with better styling */}
-          <div className="flex items-center justify-between px-8 py-5 bg-gradient-to-r from-purple-500/15 to-pink-500/15 rounded-2xl border-2 border-purple-500/30 shadow-lg">
-            <span className="text-base font-semibold text-purple-200">Your Balance:</span>
-            <span className="font-bold text-xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
-              {balanceNum.toFixed(4)} <span className="text-purple-300">WETH</span>
-            </span>
+          {/* Balances */}
+          <div className="px-6 md:px-8 py-5 bg-gradient-to-r from-purple-500/15 to-pink-500/15 rounded-2xl border-2 border-purple-500/30 shadow-lg space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs md:text-sm font-semibold text-purple-200 min-w-0 truncate">
+                Wallet (MetaMask) WETH
+              </span>
+              <span className="font-bold text-base md:text-lg text-white tabular-nums whitespace-nowrap drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+                {balanceNum.toFixed(4)} <span className="text-purple-300">WETH</span>
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs md:text-sm font-semibold text-purple-200 min-w-0 truncate">
+                Vault (Recovered) WETH
+              </span>
+              <span className="font-bold text-base md:text-lg text-white tabular-nums whitespace-nowrap drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+                {vaultWethNum.toFixed(4)} <span className="text-purple-300">WETH</span>
+              </span>
+            </div>
           </div>
 
           {/* Modern Input with proper spacing */}

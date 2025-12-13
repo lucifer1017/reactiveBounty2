@@ -303,9 +303,7 @@ export function VaultDashboard() {
               <p className="text-xs text-gray-500">
                 Unwind triggers when price &lt; $2000 (ShieldBrain CRASH_PRICE_THRESHOLD).
               </p>
-              <p className="text-xs text-gray-500 mt-2">
-                After unwind, collateral is withdrawn <span className="text-gray-300">to the vault contract</span> (not automatically to your wallet).
-              </p>
+              
             </div>
             <a
               href={`${EXPLORER_URLS.sepolia}/address/${contracts.oracle}`}
@@ -346,8 +344,11 @@ export function VaultDashboard() {
             Current: loops {loopCount}/5 • debt {debt.toFixed(2)} USDC • health factor {healthFactor.toFixed(2)}
           </div>
 
-          <div className="text-xs text-gray-500">
-            Vault balances: {vaultWeth.toFixed(4)} WETH • {vaultUsdc.toFixed(2)} USDC
+          <div className="text-xs text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="min-w-0 truncate">Vault balances:</span>
+            <span className="tabular-nums whitespace-nowrap">{vaultWeth.toFixed(4)} WETH</span>
+            <span className="text-gray-600">•</span>
+            <span className="tabular-nums whitespace-nowrap">{vaultUsdc.toFixed(2)} USDC</span>
           </div>
         </div>
       </GlassCard>
