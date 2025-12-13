@@ -1,7 +1,7 @@
 'use client';
 
 import { useAccount, useReadContract, useWatchContractEvent, useWriteContract, usePublicClient } from 'wagmi';
-import { formatUnits } from 'viem';
+import { decodeEventLog, formatUnits } from 'viem';
 import { GlassCard } from './GlassCard';
 import { AnimatedCounter } from './AnimatedCounter';
 import { HealthFactorBar } from './HealthFactorBar';
@@ -40,6 +40,8 @@ const ORACLE_ABI = [
     type: 'function',
   },
 ] as const;
+
+const ORACLE_SCALE = BigInt(10) ** BigInt(36);
 
 export function VaultDashboard() {
   const { address } = useAccount();
@@ -94,8 +96,25 @@ export function VaultDashboard() {
     eventName: 'LoopStep',
     enabled: mounted,
     onLogs: (logs) => {
+      const log = logs?.[0];
+      let iteration: number | undefined;
+      try {
+        if (log) {
+          const decoded = decodeEventLog({
+            abi: ReactiveVaultABI as unknown as any,
+            data: log.data,
+            topics: log.topics,
+          }) as unknown as { eventName: string; args: unknown };
+          if (decoded.eventName === 'LoopStep') {
+            const args = decoded.args as unknown as { iteration: bigint | number };
+            iteration = Number(args.iteration);
+          }
+        }
+      } catch {
+        // If decoding fails for any reason, fall back to a generic message.
+      }
       toast.success('🔄 Loop executed!', {
-        description: `Loop ${logs[0].args.iteration} completed`,
+        description: iteration != null ? `Loop ${iteration} completed` : 'A loop step completed',
       });
       refetch();
       setRefreshKey(prev => prev + 1);
@@ -109,11 +128,30 @@ export function VaultDashboard() {
     eventName: 'Unwind',
     enabled: mounted,
     onLogs: (logs) => {
-      const args = logs?.[0]?.args as
-        | { repaidDebt?: bigint; withdrawnCollateral?: bigint }
-        | undefined;
-      const repaid = args?.repaidDebt ? Number(args.repaidDebt) / 1e6 : undefined;
-      const withdrawn = args?.withdrawnCollateral ? Number(args.withdrawnCollateral) / 1e18 : undefined;
+      const log = logs?.[0];
+      let repaid: number | undefined;
+      let withdrawn: number | undefined;
+
+      try {
+        if (log) {
+          const decoded = decodeEventLog({
+            abi: ReactiveVaultABI as unknown as any,
+            data: log.data,
+            topics: log.topics,
+          }) as unknown as { eventName: string; args: unknown };
+          if (decoded.eventName === 'Unwind') {
+            const args = decoded.args as unknown as {
+              repaidDebt?: bigint;
+              withdrawnCollateral?: bigint;
+            };
+            repaid = args?.repaidDebt != null ? Number(args.repaidDebt) / 1e6 : undefined;
+            withdrawn =
+              args?.withdrawnCollateral != null ? Number(args.withdrawnCollateral) / 1e18 : undefined;
+          }
+        }
+      } catch {
+        // Fall back to generic message if decoding fails.
+      }
 
       toast.success('🛡️ Position unwound!', {
         description:
@@ -140,7 +178,7 @@ export function VaultDashboard() {
     setOracleTxPending(true);
     try {
       // oracle uses 36 decimals (see contracts/contracts/mocks/MockOracle.sol)
-      const newPrice = usd * 10n ** 36n;
+      const newPrice = usd * ORACLE_SCALE;
       const hash = await writeContractAsync({
         chainId: sepolia.id,
         address: contracts.oracle,
@@ -190,11 +228,17 @@ export function VaultDashboard() {
     );
   }
 
-  const collateral = position ? Number(formatUnits(position[0], 18)) : 0;
-  const debt = position ? Number(formatUnits(position[1], 6)) : 0;
-  const loopCount = position ? Number(position[2]) : 0;
-  const healthFactor = position ? Number(position[3]) / 1e18 : 0;
-  const oracleUsd = oraclePrice ? Number(oraclePrice / 10n ** 36n) : undefined;
+  // ABI is imported from JSON, so wagmi can't strongly type `position` for TS.
+  // At runtime this is a tuple: [collateral, debt, currentLoopCount, healthFactor].
+  const pos = Array.isArray(position)
+    ? (position as unknown as readonly [bigint, bigint, bigint, bigint])
+    : undefined;
+
+  const collateral = pos ? Number(formatUnits(pos[0], 18)) : 0;
+  const debt = pos ? Number(formatUnits(pos[1], 6)) : 0;
+  const loopCount = pos ? Number(pos[2]) : 0;
+  const healthFactor = pos ? Number(pos[3]) / 1e18 : 0;
+  const oracleUsd = oraclePrice ? Number(oraclePrice / ORACLE_SCALE) : undefined;
   const vaultWeth = vaultWethBal ? Number(formatUnits(vaultWethBal, 18)) : 0;
   const vaultUsdc = vaultUsdcBal ? Number(formatUnits(vaultUsdcBal, 6)) : 0;
 
@@ -276,21 +320,21 @@ export function VaultDashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
-              onClick={() => setPriceUsd(3000n)}
+              onClick={() => setPriceUsd(BigInt(3000))}
               disabled={oracleTxPending}
               className="px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 border border-white/10 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Reset ($3000)
             </button>
             <button
-              onClick={() => setPriceUsd(1900n)}
+              onClick={() => setPriceUsd(BigInt(1900))}
               disabled={oracleTxPending}
               className="px-4 py-3 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/20 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Stress ($1900)
             </button>
             <button
-              onClick={() => setPriceUsd(1000n)}
+              onClick={() => setPriceUsd(BigInt(1000))}
               disabled={oracleTxPending}
               className="px-4 py-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-400/20 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >

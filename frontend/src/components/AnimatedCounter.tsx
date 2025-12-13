@@ -23,3 +23,4 @@ export function AnimatedCounter({ value, decimals = 2, suffix = '', prefix = '' 
   return <motion.span>{display}</motion.span>;
 }
 
+

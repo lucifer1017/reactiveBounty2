@@ -150,7 +150,9 @@ export function DepositForm() {
     }
   };
 
-  const balanceNum = balance ? Number(formatUnits(balance, 18)) : 0;
+  // `useReadContract`'s `data` is loosely typed here (ABI comes from JSON),
+  // so we must narrow before passing into `formatUnits` (expects `bigint`).
+  const balanceNum = typeof balance === 'bigint' ? Number(formatUnits(balance, 18)) : 0;
   const isMintPending = step === 'mint' && !mintDone && !!mintTxHash;
   const isApprovePending = step === 'approve' && !approveDone && !!approveTxHash;
   const isDepositPending = step === 'deposit' && !depositDone && !!depositTxHash;
