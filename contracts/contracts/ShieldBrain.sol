@@ -5,12 +5,12 @@ import "./IReactive.sol";
 
 /**
  * @title ShieldBrain
- * @notice Reactive Network Logic Controller for ReactiveMorphoShield
+ * @notice Reactive Network Logic Controller for ReactiveVault
  * @dev Deployed on Reactive Network (Chain ID: 5318007)
  * 
- * Monitors two event sources:
- * 1. ReactiveMorphoShield.Deposit → Triggers executeLoop to build leverage
- * 2. ReactiveMorphoShield.LoopStep → Continues looping or stops
+ * Monitors event sources:
+ * 1. ReactiveVault.Deposit → Triggers executeLoop to build leverage
+ * 2. ReactiveVault.LoopStep → Continues looping or stops
  * 3. MockOracle.PriceUpdated → Triggers unwind if price crashes
  * 
  * Logic:
@@ -19,13 +19,21 @@ import "./IReactive.sol";
  * - On PriceUpdated: Check if price below crash threshold, trigger emergency unwind
  */
 contract ShieldBrain is IReactive {
+    // ============ State ============
+    
+    /// @notice Flag to detect if running in ReactVM (true) or deployment (false)
+    bool private vm;
+    
     // ============ Immutable Configuration ============
     
-    address public immutable vaultContract;      // ReactiveMorphoShield address on Sepolia
+    address public immutable vaultContract;      // ReactiveVault address on Sepolia
     address public immutable oracleContract;     // MockOracle address on Sepolia
     address public immutable systemContract;     // Reactive System Contract
     
     // ============ Constants ============
+    
+    /// @notice System Contract address on Reactive Network
+    address public constant SYSTEM_CONTRACT = 0x0000000000000000000000000000000000fffFfF;
     
     // Chain IDs
     uint256 public constant ORIGIN_CHAIN_ID = 11155111; // Ethereum Sepolia
@@ -53,11 +61,26 @@ contract ShieldBrain is IReactive {
     event UnwindTriggered(uint256 price, uint256 timestamp);
     event MaxIterationsReached(uint8 finalIteration);
     
+    // ============ VM Detection ============
+    
+    /**
+     * @notice Detect if running in ReactVM or during deployment
+     * @return True if in ReactVM (SYSTEM_CONTRACT has no code), False during deployment
+     * @dev In ReactVM, the SYSTEM_CONTRACT address has no code (extcodesize = 0)
+     */
+    function _detectVm() private view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(SYSTEM_CONTRACT)
+        }
+        return size == 0;
+    }
+    
     // ============ Constructor ============
     
     /**
      * @notice Initialize ShieldBrain with subscription setup
-     * @param _vaultContract ReactiveMorphoShield address on Sepolia
+     * @param _vaultContract ReactiveVault address on Sepolia
      * @param _oracleContract MockOracle address on Sepolia
      * @param _systemContract Reactive System Contract address
      */
@@ -70,36 +93,41 @@ contract ShieldBrain is IReactive {
         oracleContract = _oracleContract;
         systemContract = _systemContract;
         
-        // Always subscribe to events (regardless of deployment method)
-        // Subscription 1: ReactiveMorphoShield Deposit events
-        ISystemContract(systemContract).subscribe(
-            ORIGIN_CHAIN_ID,
-            vaultContract,
-            TOPIC_DEPOSIT,
-            REACTIVE_IGNORE,  // Don't filter by user
-            REACTIVE_IGNORE,
-            REACTIVE_IGNORE
-        );
+        // Detect if we're in ReactVM or during deployment
+        vm = _detectVm();
         
-        // Subscription 2: ReactiveMorphoShield LoopStep events
-        ISystemContract(systemContract).subscribe(
-            ORIGIN_CHAIN_ID,
-            vaultContract,
-            TOPIC_LOOP_STEP,
-            REACTIVE_IGNORE,
-            REACTIVE_IGNORE,
-            REACTIVE_IGNORE
-        );
-        
-        // Subscription 3: MockOracle PriceUpdated events
-        ISystemContract(systemContract).subscribe(
-            ORIGIN_CHAIN_ID,
-            oracleContract,
-            TOPIC_PRICE_UPDATED,
-            REACTIVE_IGNORE,
-            REACTIVE_IGNORE,
-            REACTIVE_IGNORE
-        );
+        // Only subscribe during deployment (not in ReactVM)
+        if (!vm) {
+            // Subscription 1: ReactiveVault Deposit events
+            ISystemContract(systemContract).subscribe(
+                ORIGIN_CHAIN_ID,
+                vaultContract,
+                TOPIC_DEPOSIT,
+                REACTIVE_IGNORE,  // Don't filter by user
+                REACTIVE_IGNORE,
+                REACTIVE_IGNORE
+            );
+            
+            // Subscription 2: ReactiveVault LoopStep events
+            ISystemContract(systemContract).subscribe(
+                ORIGIN_CHAIN_ID,
+                vaultContract,
+                TOPIC_LOOP_STEP,
+                REACTIVE_IGNORE,
+                REACTIVE_IGNORE,
+                REACTIVE_IGNORE
+            );
+            
+            // Subscription 3: MockOracle PriceUpdated events
+            ISystemContract(systemContract).subscribe(
+                ORIGIN_CHAIN_ID,
+                oracleContract,
+                TOPIC_PRICE_UPDATED,
+                REACTIVE_IGNORE,
+                REACTIVE_IGNORE,
+                REACTIVE_IGNORE
+            );
+        }
     }
     
     // ============ Reactive Logic ============
@@ -108,8 +136,12 @@ contract ShieldBrain is IReactive {
      * @notice Main reactive function - processes subscribed events
      * @param log Event log from origin chain
      * @dev Called automatically by Reactive Network when subscribed event detected
+     *      Only executes in ReactVM context (vm = true)
      */
     function react(LogRecord calldata log) external override {
+        // CRITICAL: Only execute in ReactVM, not during manual calls
+        require(vm, "ShieldBrain: VM only");
+        
         // Validate origin chain
         require(log.chain_id == ORIGIN_CHAIN_ID, "ShieldBrain: wrong chain");
         

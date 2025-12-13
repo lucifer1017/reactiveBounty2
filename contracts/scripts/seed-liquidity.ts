@@ -14,9 +14,9 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-// Addresses - UPDATE THESE AFTER DEPLOYMENT
+// Addresses - from .env
 const POOL_ADDRESS = process.env.POOL_ADDRESS;
-const MOCK_USDC = "0xA41D33DE4B7C61765355f69D056D2CB8450478a0";
+const MOCK_USDC = process.env.MOCK_USDC_ADDRESS || "0x65a1FC2fe06f89F2AC414b032981Bf3e94a9720D";
 
 const POOL_ABI = [
   {

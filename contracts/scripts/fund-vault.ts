@@ -10,7 +10,7 @@
  *   - Set PRIVATE_KEY in .env
  *   - Set SEPOLIA_RPC_URL in .env
  *   - Set SHIELD_VAULT_ADDRESS in .env
- *   - Wallet must have at least 0.03 ETH on Sepolia (0.02 + gas)
+ *   - Wallet must have at least 0.012 ETH on Sepolia (0.01 + gas)
  */
 
 import { createWalletClient, createPublicClient, http, parseEther, formatEther } from 'viem';
@@ -24,7 +24,7 @@ dotenv.config();
 // ============ Configuration ============
 
 const CALLBACK_PROXY_ADDRESS = '0xc9f36411C9897e7F959D99ffca2a0Ba7ee0D7bDA' as const;
-const FUNDING_AMOUNT = parseEther('0.02'); // 0.02 ETH
+const FUNDING_AMOUNT = parseEther('0.01'); // 0.01 ETH
 
 // Callback Proxy ABI (only depositTo function)
 const CALLBACK_PROXY_ABI = [
@@ -82,7 +82,7 @@ async function fundVault() {
   const balance = await publicClient.getBalance({ address: account.address });
   console.log(`💰 Wallet Balance: ${formatEther(balance)} ETH`);
 
-  const requiredBalance = FUNDING_AMOUNT + parseEther('0.001'); // Funding + gas estimate
+  const requiredBalance = FUNDING_AMOUNT + parseEther('0.002'); // Funding + gas estimate
   if (balance < requiredBalance) {
     throw new Error(
       `Insufficient balance. Need at least ${formatEther(requiredBalance)} ETH, but have ${formatEther(balance)} ETH`

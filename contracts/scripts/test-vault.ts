@@ -13,12 +13,12 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-// Addresses - UPDATE THESE IN .env
-const MOCK_WETH = "0x325215b0948eBf5dF130643e9639479E4912adfB";
-const MOCK_USDC = "0xA41D33DE4B7C61765355f69D056D2CB8450478a0";
-const MOCK_ORACLE = "0x6A1cAF23D2B53A2AdC59744aeF517A030DB0a540";
-const VAULT = process.env.SHIELD_VAULT_ADDRESS || "YOUR_VAULT_ADDRESS";
-const BRAIN = process.env.SHIELD_BRAIN_ADDRESS || "YOUR_BRAIN_ADDRESS";
+// Addresses - all sourced from .env to avoid stale hardcodes
+const MOCK_WETH = (process.env.MOCK_WETH_ADDRESS as `0x${string}`) || "0xMockWETH";
+const MOCK_USDC = (process.env.MOCK_USDC_ADDRESS as `0x${string}`) || "0xMockUSDC";
+const MOCK_ORACLE = (process.env.MOCK_ORACLE_ADDRESS as `0x${string}`) || "0xMockOracle";
+const VAULT = (process.env.SHIELD_VAULT_ADDRESS as `0x${string}`) || "0xVault";
+const BRAIN = (process.env.SHIELD_BRAIN_ADDRESS as `0x${string}`) || "0xBrain";
 
 // ABIs
 const ERC20_ABI = [
@@ -84,8 +84,11 @@ async function main() {
     throw new Error("Missing PRIVATE_KEY or SEPOLIA_RPC_URL in .env");
   }
 
-  if (VAULT === "YOUR_VAULT_ADDRESS") {
+  if (!process.env.SHIELD_VAULT_ADDRESS) {
     throw new Error("Update SHIELD_VAULT_ADDRESS in .env!");
+  }
+  if (!process.env.MOCK_WETH_ADDRESS || !process.env.MOCK_USDC_ADDRESS || !process.env.MOCK_ORACLE_ADDRESS) {
+    throw new Error("Update MOCK_WETH_ADDRESS / MOCK_USDC_ADDRESS / MOCK_ORACLE_ADDRESS in .env!");
   }
 
   const account = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}` as `0x${string}`);
@@ -103,26 +106,42 @@ async function main() {
   });
 
   // ========================================
-  // STEP 1: Mint WETH
+  // STEP 1: Check/Mint WETH
   // ========================================
-  console.log("📝 Step 1: Minting 1 WETH...");
+  console.log("📝 Step 1: Checking WETH balance...");
   
-  const mintHash = await walletClient.writeContract({
-    address: MOCK_WETH,
-    abi: ERC20_ABI,
-    functionName: "mint",
-    args: [account.address, parseEther("1")],
-  });
-  
-  await publicClient.waitForTransactionReceipt({ hash: mintHash });
-  console.log(`   ✅ Minted! TX: ${mintHash}`);
-
-  const wethBalance = await publicClient.readContract({
+  let wethBalance = await publicClient.readContract({
     address: MOCK_WETH,
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: [account.address],
   });
+  
+  console.log(`   Current Balance: ${formatUnits(wethBalance, 18)} WETH`);
+  
+  if (wethBalance < parseEther("1")) {
+    console.log(`   Minting 1 WETH...`);
+    
+    const mintHash = await walletClient.writeContract({
+      address: MOCK_WETH,
+      abi: ERC20_ABI,
+      functionName: "mint",
+      args: [account.address, parseEther("1")],
+    });
+    
+    await publicClient.waitForTransactionReceipt({ hash: mintHash });
+    console.log(`   ✅ Minted! TX: ${mintHash}`);
+    
+    wethBalance = await publicClient.readContract({
+      address: MOCK_WETH,
+      abi: ERC20_ABI,
+      functionName: "balanceOf",
+      args: [account.address],
+    });
+  } else {
+    console.log(`   ✅ Sufficient balance, skipping mint`);
+  }
+  
   console.log(`   💰 WETH Balance: ${formatUnits(wethBalance, 18)} WETH\n`);
 
   // ========================================

@@ -10,7 +10,7 @@
  *   - Set PRIVATE_KEY in .env
  *   - Set REACTIVE_RPC_URL in .env
  *   - Set SHIELD_BRAIN_ADDRESS in .env
- *   - Wallet must have at least 1.1 lReact on Reactive Network (1.0 + gas)
+ *   - Wallet must have at least 0.55 lReact on Reactive Network (0.5 + gas)
  */
 
 import {
@@ -30,7 +30,7 @@ dotenv.config();
 // ============ Configuration ============
 
 const SYSTEM_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000fffFfF' as const;
-const FUNDING_AMOUNT = parseEther('1.0'); // 1.0 lReact
+const FUNDING_AMOUNT = parseEther('0.5'); // 0.5 lReact
 
 // Define Reactive Network (Lasna)
 const reactiveLasna = defineChain({
@@ -114,7 +114,7 @@ async function fundBrain() {
   const balance = await publicClient.getBalance({ address: account.address });
   console.log(`💰 Wallet Balance: ${formatEther(balance)} lReact`);
 
-  const requiredBalance = FUNDING_AMOUNT + parseEther('0.1'); // Funding + gas estimate
+  const requiredBalance = FUNDING_AMOUNT + parseEther('0.05'); // Funding + gas estimate
   if (balance < requiredBalance) {
     throw new Error(
       `Insufficient balance. Need at least ${formatEther(requiredBalance)} lReact, but have ${formatEther(balance)} lReact`

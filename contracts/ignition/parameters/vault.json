@@ -1,8 +1,8 @@
 {
     "ReactiveVaultModule": {
-        "pool": "0xdf5B9DB95247E891A1d6d8d38da186170986A10a",
-        "collateralToken": "0x325215b0948eBf5dF130643e9639479E4912adfB",
-        "loanToken": "0xA41D33DE4B7C61765355f69D056D2CB8450478a0",
-        "reactiveVmId": "0xf092ae8eb89f9d1dde19b80447de5b1528d17ae5"
+        "pool": "0x31c0921266A1Ac16CC1E49d3dc553af41de46A32",
+        "collateralToken": "0xF0d30453388f90F3aa6F71788A878d388a42e32b",
+        "loanToken": "0x65a1FC2fe06f89F2AC414b032981Bf3e94a9720D",
+        "reactiveVmId": "0x4055765f4b80A64af9dE05BF896Cf953A5047888"
     }
 }
