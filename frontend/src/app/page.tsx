@@ -12,12 +12,12 @@ export default function Home() {
     <main className="min-h-screen relative">
       <AnimatedBackground />
       
-      <div className="relative z-10 container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-6 md:px-8 lg:px-12 py-12">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-12"
+          className="flex items-center justify-between mb-16 pb-6"
         >
           <div className="flex items-center gap-4">
             <div className="relative p-3 rounded-2xl bg-gradient-to-br from-purple-500/30 via-blue-500/20 to-cyan-400/20 border border-white/10 shadow-[0_15px_60px_rgba(88,28,135,0.25)]">
@@ -50,11 +50,11 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-center mb-12"
+          className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 rounded-full mb-6">
-            <Zap className="w-4 h-4 text-purple-400" />
-            <span className="text-sm text-purple-300">Powered by Reactive Network</span>
+          <div className="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 rounded-full mb-8 shadow-lg shadow-purple-500/20">
+            <Zap className="w-5 h-5 text-purple-400" />
+            <span className="text-sm font-medium text-purple-200">Powered by Reactive Network</span>
           </div>
           
           <h2 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white via-purple-100 to-cyan-100 bg-clip-text text-transparent">
@@ -66,14 +66,14 @@ export default function Home() {
         </motion.div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12 max-w-7xl mx-auto px-4">
           {/* Dashboard - Takes 2 columns */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 w-full">
             <VaultDashboard />
           </div>
 
           {/* Deposit Form - Takes 1 column */}
-          <div>
+          <div className="w-full max-w-xl lg:max-w-none mx-auto">
             <DepositForm />
           </div>
         </div>

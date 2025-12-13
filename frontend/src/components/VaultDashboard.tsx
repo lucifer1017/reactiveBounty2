@@ -74,20 +74,20 @@ export function VaultDashboard() {
   const healthFactor = position ? Number(position[3]) / 1e18 : 0;
 
   return (
-    <div className="space-y-6" key={refreshKey}>
+    <div className="space-y-8" key={refreshKey}>
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
         {/* Collateral Card */}
         <GlassCard delay={0.1}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-400 text-sm mb-2">Collateral</p>
+              <p className="text-gray-400 text-sm mb-3">Collateral</p>
               <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
                 <AnimatedCounter value={collateral} decimals={4} suffix=" WETH" />
               </div>
             </div>
-            <div className="p-3 bg-green-500/20 rounded-xl">
-              <Coins className="w-6 h-6 text-green-400" />
+            <div className="p-4 bg-green-500/20 rounded-xl">
+              <Coins className="w-7 h-7 text-green-400" />
             </div>
           </div>
         </GlassCard>
@@ -96,13 +96,13 @@ export function VaultDashboard() {
         <GlassCard delay={0.2}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-400 text-sm mb-2">Debt</p>
+              <p className="text-gray-400 text-sm mb-3">Debt</p>
               <div className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
                 <AnimatedCounter value={debt} decimals={2} suffix=" USDC" />
               </div>
             </div>
-            <div className="p-3 bg-orange-500/20 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-orange-400" />
+            <div className="p-4 bg-orange-500/20 rounded-xl">
+              <TrendingUp className="w-7 h-7 text-orange-400" />
             </div>
           </div>
         </GlassCard>

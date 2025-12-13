@@ -28,9 +28,9 @@ export function GlassCard({ children, className = '', delay = 0 }: GlassCardProp
       <div className="absolute -inset-12 bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.15),_transparent_45%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-3xl" />
 
       {/* Card body */}
-      <div className="relative rounded-[14px] bg-[rgba(15,17,28,0.72)] backdrop-blur-2xl border border-white/5 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-40" />
-        <div className="relative p-6">
+      <div className="relative rounded-2xl bg-[rgba(15,17,28,0.75)] backdrop-blur-2xl border-2 border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/8 to-transparent opacity-50" />
+        <div className="relative p-10">
           {children}
         </div>
       </div>
