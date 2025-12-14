@@ -472,6 +472,25 @@ describe("ReactiveVault - Comprehensive Test Suite", async function () {
 
     it("Should revert on 6th loop (max loops reached)", async function () {
       // Create a fresh position for this test (previous test already used 5 loops)
+      // First, unwind any existing position to reset state
+      const testClientUnwind = await viem.getTestClient();
+      await testClientUnwind.impersonateAccount({ address: CALLBACK_PROXY });
+      await testClientUnwind.setBalance({ address: CALLBACK_PROXY, value: parseEther("100") });
+      const callbackProxyUnwind = await viem.getWalletClient({ address: CALLBACK_PROXY });
+      
+      // Check if there's an existing position and unwind it
+      const existingPosition = await vault.read.getPosition();
+      if (existingPosition[1] > 0n || existingPosition[0] > 0n) {
+        try {
+          await vault.write.unwind([deployer.account.address], {
+            account: callbackProxyUnwind.account,
+          });
+        } catch (e) {
+          // Ignore if unwind fails
+        }
+      }
+      
+      // Now create fresh position
       await mockWeth.write.approve([vault.address, DEPOSIT_AMOUNT], {
         account: user.account,
       });
@@ -657,7 +676,12 @@ describe("ReactiveVault - Comprehensive Test Suite", async function () {
       });
       await vault.write.deposit([DEPOSIT_AMOUNT], { account: user.account });
       
+      // Impersonate CALLBACK_PROXY
+      const testClient = await viem.getTestClient();
+      await testClient.impersonateAccount({ address: CALLBACK_PROXY });
+      await testClient.setBalance({ address: CALLBACK_PROXY, value: parseEther("100") });
       const callbackProxy = await viem.getWalletClient({ address: CALLBACK_PROXY });
+      
       await vault.write.executeLoop([deployer.account.address], {
         account: callbackProxy.account,
       });
@@ -715,7 +739,12 @@ describe("ReactiveVault - Comprehensive Test Suite", async function () {
       });
       await vault.write.deposit([DEPOSIT_AMOUNT], { account: user.account });
       
+      // Impersonate CALLBACK_PROXY
+      const testClient = await viem.getTestClient();
+      await testClient.impersonateAccount({ address: CALLBACK_PROXY });
+      await testClient.setBalance({ address: CALLBACK_PROXY, value: parseEther("100") });
       const callbackProxy = await viem.getWalletClient({ address: CALLBACK_PROXY });
+      
       for (let i = 1; i <= 3; i++) {
         await vault.write.executeLoop([deployer.account.address], {
           account: callbackProxy.account,
