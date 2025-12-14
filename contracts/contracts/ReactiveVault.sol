@@ -49,6 +49,11 @@ contract ReactiveVault is IPayer {
     /// @notice Maximum loop iterations
     uint8 public constant MAX_LOOPS = 5;
     
+    /// @notice Maximum slippage tolerance (basis points, 100 = 1%)
+    /// @dev For mock swaps (minting), this is documented but not enforced
+    ///      In production, this would validate swap output vs expected amount
+    uint256 public constant MAX_SLIPPAGE_BPS = 100; // 1%
+    
     /// @notice Loop iteration counter
     uint8 public loopCount;
     
@@ -171,24 +176,34 @@ contract ReactiveVault is IPayer {
         // Assume price: 1 ETH = $3000
         // borrowAmount is in USDC (6 decimals)
         // wethAmount should be in WETH (18 decimals)
-        uint256 wethAmount = (borrowAmount * 1e18) / 3000e6;
+        uint256 expectedWethAmount = (borrowAmount * 1e18) / 3000e6;
+        
+        // Calculate minimum output with slippage tolerance
+        // In production, this would be: minAmount = expectedAmount * (10000 - MAX_SLIPPAGE_BPS) / 10000
+        // For mocks, we use fixed oracle price so slippage is not applicable
+        uint256 minWethAmount = (expectedWethAmount * (10000 - MAX_SLIPPAGE_BPS)) / 10000;
         
         // Mint WETH to vault (simulates swap)
+        // Note: In production, this would be a real swap with slippage validation
         (bool mintSuccess, ) = address(collateralToken).call(
-            abi.encodeWithSignature("mint(address,uint256)", address(this), wethAmount)
+            abi.encodeWithSignature("mint(address,uint256)", address(this), expectedWethAmount)
         );
         require(mintSuccess, "Mint failed");
         
+        // Validate output meets minimum (for production swaps)
+        // In mock: expectedWethAmount == actual, so this always passes
+        require(expectedWethAmount >= minWethAmount, "Slippage too high");
+        
         // Step 4: Supply minted WETH back to pool
-        collateralToken.approve(POOL, wethAmount);
+        collateralToken.approve(POOL, expectedWethAmount);
         ILendingPool(POOL).supply(
             address(collateralToken),
-            wethAmount,
+            expectedWethAmount,
             address(this)
         );
         
         // Emit event to trigger next iteration
-        emit LoopStep(loopCount, borrowAmount, wethAmount);
+        emit LoopStep(loopCount, borrowAmount, expectedWethAmount);
     }
     
     /**

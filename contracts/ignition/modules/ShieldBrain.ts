@@ -3,11 +3,11 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 /**
  * @title ShieldBrain Deployment Module
  * @notice Deploys the Reactive Network logic controller
- * @dev Deploy this module last on Reactive Network (after ReactiveMorphoShield)
+ * @dev Deploy this module last on Reactive Network (after ReactiveVault)
  * 
  * Prerequisites:
  *   1. Deploy MockOracle.ts on Sepolia → Get MockOracle address
- *   2. Deploy ReactiveMorphoShield.ts on Sepolia → Get vault address
+ *   2. Deploy ReactiveVault.ts on Sepolia → Get vault address
  * 
  * System Contract: 0x0000000000000000000000000000000000fffFfF (hardcoded on Reactive Network)
  * 
@@ -19,7 +19,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
  * parameters/reactive.json example:
  * {
  *   "ShieldBrainModule": {
- *     "vaultContract": "0x...",  // ReactiveMorphoShield address on Sepolia
+ *     "vaultContract": "0x...",  // ReactiveVault address on Sepolia
  *     "oracleContract": "0x...", // MockOracle address on Sepolia
  *     "systemContract": "0x0000000000000000000000000000000000fffFfF"
  *   }

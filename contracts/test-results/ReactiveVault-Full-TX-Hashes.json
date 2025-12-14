@@ -1,0 +1,50 @@
+{
+  "testSuite": "ReactiveVault-Full",
+  "timestamp": "2025-12-14T15:35:12.437Z",
+  "totalTransactions": 5,
+  "transactions": [
+    {
+      "testName": "setup",
+      "description": "Seed pool with USDC liquidity",
+      "chain": "local",
+      "txHash": "0xb8fa514325e85463d20d161c09110a8b44a593655a6330a470f2f9e3863b6002",
+      "blockNumber": "6",
+      "gasUsed": "97195",
+      "status": "success"
+    },
+    {
+      "testName": "setup",
+      "description": "Mint WETH to user",
+      "chain": "local",
+      "txHash": "0xb2d3236c6054c34d2e6c0151b43870680a111207481f7f878aad1cd0f883e051",
+      "blockNumber": "7",
+      "gasUsed": "68917",
+      "status": "success"
+    },
+    {
+      "testName": "deposit",
+      "description": "User deposits WETH",
+      "chain": "local",
+      "txHash": "0x337e0b3f5d696c007b384898cf9bf39e2dac5424edc4990d45ef95bb5cd9848f",
+      "blockNumber": "9",
+      "gasUsed": "118978",
+      "status": "success"
+    },
+    {
+      "testName": "executeLoop",
+      "description": "Unauthorized executeLoop call reverted",
+      "chain": "local",
+      "txHash": "N/A - Reverted",
+      "status": "failed"
+    },
+    {
+      "testName": "pay",
+      "description": "Send ETH to vault (pay function)",
+      "chain": "local",
+      "txHash": "0x513ae8a1d91054779b24b7731d77137bdbb30e8144978377c17d339b9d37cf7f",
+      "blockNumber": "18",
+      "gasUsed": "21055",
+      "status": "success"
+    }
+  ]
+}
