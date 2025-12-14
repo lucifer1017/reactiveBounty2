@@ -32,7 +32,7 @@ export function WalletButton() {
         whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(139, 92, 246, 0.5)' }}
         whileTap={{ scale: 0.95 }}
         onClick={() => disconnect()}
-        className="group relative px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl border border-purple-500/30 rounded-xl text-white font-medium overflow-hidden"
+        className="group relative px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl border border-purple-500/30 rounded-xl text-white font-medium overflow-hidden cursor-pointer"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/20 to-purple-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         <div className="relative flex items-center gap-2">
@@ -51,7 +51,7 @@ export function WalletButton() {
       whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(139, 92, 246, 0.6)' }}
       whileTap={{ scale: 0.95 }}
       onClick={() => connect({ connector: connectors[0] })}
-      className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-bold text-lg overflow-hidden shadow-lg shadow-purple-500/50"
+      className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-bold text-lg overflow-hidden shadow-lg shadow-purple-500/50 cursor-pointer"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <div className="relative flex items-center gap-3">

@@ -44,6 +44,7 @@ const ORACLE_ABI = [
 const ORACLE_SCALE = BigInt(10) ** BigInt(36);
 
 export function VaultDashboard() {
+  // Shows the vault position and lets you simulate oracle price changes (to trigger unwind).
   const { address } = useAccount();
   const publicClient = usePublicClient({ chainId: sepolia.id });
   const { writeContractAsync } = useWriteContract();
@@ -55,7 +56,6 @@ export function VaultDashboard() {
     setMounted(true);
   }, []);
 
-  // Read vault position
   const { data: position, refetch } = useReadContract({
     address: contracts.vault,
     abi: ReactiveVaultABI,
@@ -72,7 +72,6 @@ export function VaultDashboard() {
     query: { refetchInterval: 10_000 },
   });
 
-  // Show where assets end up after unwind (vault holds withdrawn collateral)
   const { data: vaultWethBal, refetch: refetchVaultWethBal } = useReadContract({
     address: contracts.weth,
     abi: ERC20_ABI,
@@ -89,7 +88,6 @@ export function VaultDashboard() {
     query: { refetchInterval: 10_000 },
   });
 
-  // Watch for Loop events
   useWatchContractEvent({
     address: contracts.vault,
     abi: ReactiveVaultABI,
@@ -110,18 +108,30 @@ export function VaultDashboard() {
             iteration = Number(args.iteration);
           }
         }
-      } catch {
-        // If decoding fails for any reason, fall back to a generic message.
-      }
+      } catch {}
       toast.success('🔄 Loop executed!', {
         description: iteration != null ? `Loop ${iteration} completed` : 'A loop step completed',
       });
+
+      if (iteration != null && iteration > 0 && iteration < 5) {
+        toast.message('Waiting for next loop…', {
+          description: `ShieldBrain should trigger loop ${iteration + 1} shortly.`,
+          duration: 4500,
+        });
+      }
+
+      if (iteration === 5) {
+        toast.success('✅ Target leverage reached', {
+          description: 'All 5 loops completed.',
+          duration: 4000,
+        });
+      }
+
       refetch();
       setRefreshKey(prev => prev + 1);
     },
   });
 
-  // Watch for Unwind events
   useWatchContractEvent({
     address: contracts.vault,
     abi: ReactiveVaultABI,
@@ -149,9 +159,7 @@ export function VaultDashboard() {
               args?.withdrawnCollateral != null ? Number(args.withdrawnCollateral) / 1e18 : undefined;
           }
         }
-      } catch {
-        // Fall back to generic message if decoding fails.
-      }
+      } catch {}
 
       toast.success('🛡️ Position unwound!', {
         description:
@@ -177,7 +185,6 @@ export function VaultDashboard() {
     }
     setOracleTxPending(true);
     try {
-      // oracle uses 36 decimals (see contracts/contracts/mocks/MockOracle.sol)
       const newPrice = usd * ORACLE_SCALE;
       const hash = await writeContractAsync({
         chainId: sepolia.id,
@@ -191,7 +198,6 @@ export function VaultDashboard() {
       toast.success('📉 Oracle price updated', { description: `Set WETH to $${usd.toString()}` });
       refetchOraclePrice();
 
-      // Unwind is not immediate: ShieldBrain on Reactive Network must observe PriceUpdated and send callback.
       toast.message('Waiting for Reactive unwind…', {
         description: 'If price < $2000, ShieldBrain should trigger unwind shortly.',
         duration: 6000,
@@ -296,7 +302,7 @@ export function VaultDashboard() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <p className="text-sm text-gray-400">Demo Controls (MockOracle)</p>
+              <p className="text-sm text-gray-400">Demo Controls (Oracle)</p>
               <p className="text-lg font-semibold text-white">
                 Oracle Price: {oracleUsd ?? '…'} <span className="text-gray-400">USD</span>
               </p>
@@ -309,7 +315,7 @@ export function VaultDashboard() {
               href={`${EXPLORER_URLS.sepolia}/address/${contracts.oracle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800/40 hover:bg-gray-800/60 rounded-lg transition-colors w-fit"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800/40 hover:bg-gray-800/60 rounded-lg transition-colors w-fit cursor-pointer"
             >
               <span className="text-sm text-gray-300">View Oracle</span>
               <ExternalLink className="w-4 h-4 text-gray-400" />
@@ -320,21 +326,21 @@ export function VaultDashboard() {
             <button
               onClick={() => setPriceUsd(BigInt(3000))}
               disabled={oracleTxPending}
-              className="px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 border border-white/10 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-3 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 border border-white/10 text-white font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Reset ($3000)
             </button>
             <button
               onClick={() => setPriceUsd(BigInt(1900))}
               disabled={oracleTxPending}
-              className="px-4 py-3 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/20 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-3 rounded-xl bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-400/20 text-white font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Stress ($1900)
             </button>
             <button
               onClick={() => setPriceUsd(BigInt(1000))}
               disabled={oracleTxPending}
-              className="px-4 py-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-400/20 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-400/20 text-white font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Crash ($1000)
             </button>
@@ -360,7 +366,7 @@ export function VaultDashboard() {
             href={`${EXPLORER_URLS.sepolia}/address/${contracts.vault}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg transition-colors"
+            className="group flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg transition-colors cursor-pointer"
           >
             <span className="text-sm text-gray-300">View Vault</span>
             <ExternalLink className="w-4 h-4 text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -370,7 +376,7 @@ export function VaultDashboard() {
             href={REACTIVE_SCAN_URLS.brainContract ?? `${EXPLORER_URLS.reactive}/address/${contracts.brain}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-2 px-4 py-2 bg-pink-500/20 hover:bg-pink-500/30 rounded-lg transition-colors"
+            className="group flex items-center gap-2 px-4 py-2 bg-pink-500/20 hover:bg-pink-500/30 rounded-lg transition-colors cursor-pointer"
           >
             <span className="text-sm text-gray-300">View Brain</span>
             <ExternalLink className="w-4 h-4 text-pink-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />

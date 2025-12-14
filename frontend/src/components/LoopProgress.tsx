@@ -13,7 +13,6 @@ export function LoopProgress({ current, total }: LoopProgressProps) {
 
   return (
     <div className="relative w-32 h-32">
-      {/* Background circle */}
       <svg className="w-full h-full transform -rotate-90">
         <circle
           cx="64"
@@ -24,7 +23,6 @@ export function LoopProgress({ current, total }: LoopProgressProps) {
           fill="none"
         />
         
-        {/* Progress circle */}
         <motion.circle
           cx="64"
           cy="64"
@@ -47,7 +45,6 @@ export function LoopProgress({ current, total }: LoopProgressProps) {
         </defs>
       </svg>
 
-      {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <Zap className="w-8 h-8 text-purple-400 mb-1 animate-pulse" />
         <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -56,7 +53,6 @@ export function LoopProgress({ current, total }: LoopProgressProps) {
         <div className="text-xs text-gray-400">Loops</div>
       </div>
 
-      {/* Glow effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-pulse" />
     </div>
   );

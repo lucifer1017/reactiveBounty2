@@ -44,7 +44,6 @@ export function HealthFactorBar({ value }: HealthFactorBarProps) {
           <div className="absolute inset-0 bg-white/20 animate-pulse" />
         </motion.div>
         
-        {/* Glow effect */}
         <motion.div
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 0.5, width: `${percentage}%` }}

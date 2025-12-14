@@ -37,7 +37,7 @@ export default function Home() {
               href="https://github.com/lucifer1017/reactiveBounty2"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-3 bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 rounded-xl transition-colors"
+              className="p-3 bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 rounded-xl transition-colors cursor-pointer"
             >
               <Github className="w-5 h-5 text-gray-400" />
             </a>
