@@ -1,7 +1,7 @@
 {
   "testSuite": "ReactiveVault-Full",
-  "timestamp": "2025-12-14T15:39:25.685Z",
-  "totalTransactions": 5,
+  "timestamp": "2025-12-14T18:06:09.630Z",
+  "totalTransactions": 14,
   "transactions": [
     {
       "testName": "setup",
@@ -32,18 +32,97 @@
     },
     {
       "testName": "executeLoop",
+      "description": "Execute loop iteration 1",
+      "chain": "local",
+      "txHash": "0x0e26113de594adeacdf48759a83664bff06e9c154e8b8b141a2c86c75dfaea04",
+      "blockNumber": "10",
+      "gasUsed": "172750",
+      "status": "success"
+    },
+    {
+      "testName": "executeLoop",
+      "description": "Execute loop iteration 2",
+      "chain": "local",
+      "txHash": "0x631f17afde60fa67fca8ac77a81e12fa40b46be79a4449a5e17832d8bc2e3351",
+      "blockNumber": "11",
+      "gasUsed": "131043",
+      "status": "success"
+    },
+    {
+      "testName": "executeLoop",
+      "description": "Execute loop iteration 3",
+      "chain": "local",
+      "txHash": "0x2281d9553fcb9ac34f9aca32ac34af14af158581752c06d1d5535eaaf3c033e5",
+      "blockNumber": "12",
+      "gasUsed": "131043",
+      "status": "success"
+    },
+    {
+      "testName": "executeLoop",
+      "description": "Execute loop iteration 4",
+      "chain": "local",
+      "txHash": "0xafe4fb38559e6a51e3a5d6c4609a08afb51b51f2b6035497a0cb8e3c2f1ee65d",
+      "blockNumber": "13",
+      "gasUsed": "131043",
+      "status": "success"
+    },
+    {
+      "testName": "executeLoop",
+      "description": "Execute loop iteration 5",
+      "chain": "local",
+      "txHash": "0x42da0cf46efc3e8d3ade6c8839d5f77a14615b00cea688527add29ba10c719fb",
+      "blockNumber": "14",
+      "gasUsed": "131043",
+      "status": "success"
+    },
+    {
+      "testName": "executeLoop",
+      "description": "6th loop execution reverted (max loops reached)",
+      "chain": "local",
+      "txHash": "N/A - Reverted",
+      "status": "failed"
+    },
+    {
+      "testName": "executeLoop",
       "description": "Unauthorized executeLoop call reverted",
       "chain": "local",
       "txHash": "N/A - Reverted",
       "status": "failed"
     },
     {
+      "testName": "unwind",
+      "description": "Unwind with zero debt",
+      "chain": "local",
+      "txHash": "0x4c9ff869242df3b8f8c2ee1a4c934eebf961bb90d88d66467d2a7c0d6d5ab132",
+      "blockNumber": "25",
+      "gasUsed": "93992",
+      "status": "success"
+    },
+    {
       "testName": "pay",
       "description": "Send ETH to vault (pay function)",
       "chain": "local",
-      "txHash": "0x513ae8a1d91054779b24b7731d77137bdbb30e8144978377c17d339b9d37cf7f",
-      "blockNumber": "18",
+      "txHash": "0x3794fda368f27a147bede8e1e4fa0d27848af074225c120c86824a6e22841581",
+      "blockNumber": "29",
       "gasUsed": "21055",
+      "status": "success"
+    },
+    {
+      "testName": "price-crash",
+      "description": "Oracle price crash (50% drop)",
+      "chain": "local",
+      "txHash": "0x077d425b2fc26d757f9980352e4fbdd3522c4626e242ae5ee81bfef4f6ff12fd",
+      "blockNumber": "35",
+      "gasUsed": "28307",
+      "status": "success"
+    },
+    {
+      "testName": "price-crash",
+      "description": "Emergency unwind after price crash",
+      "chain": "local",
+      "txHash": "0xff9fcbd48e6029b7a36fd81200ddeecbe6408455ccebcb8f9d1ff98f4a9709e1",
+      "blockNumber": "36",
+      "gasUsed": "94792",
       "status": "success"
     }
   ]
